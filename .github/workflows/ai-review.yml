@@ -21,6 +21,8 @@
 #   OpenAI, it also counts each model's findings, to judge the cost.
 # - Generated files count like any other. Files under plans/ are read
 #   for intent only.
+# - The merge queue's merge commit passes at once: a PR joins the queue
+#   only after this review passed.
 #
 # Usage
 #
@@ -32,8 +34,9 @@
 #   on:
 #     pull_request_target:
 #       types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
+#     merge_group:
 #   concurrency:
-#     group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+#     group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.merge_group.head_sha }}
 #     cancel-in-progress: true
 #   permissions:
 #     contents: read
@@ -41,7 +44,7 @@
 #     statuses: write
 #   jobs:
 #     ai-review:
-#       uses: mirurobotics/.github/.github/workflows/ai-review.yml@<commit-sha>
+#       uses: mirurobotics/workflows/.github/workflows/ai-review.yml@<commit-sha>
 #       with:
 #         effort: high  # optional; also `model` and `runs-on`
 #         openai-model: gpt-6.1-sol  # optional; adds the OpenAI reviewer, also `openai-effort`
@@ -64,8 +67,8 @@
 # - OPENAI_API_KEY, with openai-model. Codex runs only for pushers with
 #   write access or allowed bots, so a fork can't spend the key.
 #
-# This lives in the public .github repo so public repos can call it;
-# GitHub only lets private repos call workflows from a private repo.
+# This lives in a public repo so public repos can call it; GitHub only
+# lets private repos call workflows from a private repo.
 
 # yamllint disable rule:line-length
 name: AI Review
@@ -293,7 +296,8 @@ jobs:
             await require(`${process.env.AI_REVIEW_LIB}/record.js`).pending({ github, context })
 
   # Every push, plus switches between draft and ready. Callers must
-  # subscribe to only these: any other event cancels a running review.
+  # subscribe to only these and merge_group: any other event cancels a
+  # running review.
   # Drafts get the design review; ready PRs wait for the reviewer jobs,
   # then Claude checks their findings and records the verdict.
   review:
@@ -340,3 +344,23 @@ jobs:
         with:
           script: |
             await require(`${process.env.AI_REVIEW_LIB}/record.js`).record({ github, context, core })
+
+  # Merge queue: required checks must also report on the queue's merge
+  # commit. Its own job, so only it gets statuses: write here.
+  merge-queue:
+    if: github.event_name == 'merge_group'
+    timeout-minutes: 10
+    runs-on: ${{ inputs.runs-on }}
+    permissions:
+      contents: read
+      statuses: write
+    env:
+      SHA: ${{ github.event.merge_group.head_sha }}
+      AI_REVIEW_LIB: ${{ github.workspace }}/ai-review-src/ai-review/lib
+    steps:
+      - *checkout-ai-review
+      - name: Set status success
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            await require(`${process.env.AI_REVIEW_LIB}/record.js`).queued({ github, context })
