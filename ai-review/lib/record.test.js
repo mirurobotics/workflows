@@ -3,7 +3,7 @@ const assert = require('node:assert/strict')
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
-const { record, pending, designBody, verdictBody } = require('./record.js')
+const { record, pending, queued, designBody, verdictBody } = require('./record.js')
 
 const SHA = 'f'.repeat(40)
 const URL = 'https://github.com/o/r/actions/runs/1'
@@ -130,4 +130,14 @@ test('pending sets the pending status on the head', async () => {
     env: { SHA, STATUS_CONTEXT: 'ai-review', GITHUB_SERVER_URL: 'https://github.com', GITHUB_REPOSITORY: 'o/r', GITHUB_RUN_ID: '1' }
   })
   assert.deepEqual(calls, [{ owner: 'o', repo: 'r', sha: SHA, state: 'pending', context: 'ai-review', description: 'Claude is reviewing this commit', target_url: URL }])
+})
+
+test('queued passes the merge queue commit', async () => {
+  const calls = []
+  await queued({
+    github: { rest: { repos: { createCommitStatus: async (a) => calls.push(a) } } },
+    context: { repo: { owner: 'o', repo: 'r' } },
+    env: { SHA, STATUS_CONTEXT: 'ai-review', GITHUB_SERVER_URL: 'https://github.com', GITHUB_REPOSITORY: 'o/r', GITHUB_RUN_ID: '1' }
+  })
+  assert.deepEqual(calls, [{ owner: 'o', repo: 'r', sha: SHA, state: 'success', context: 'ai-review', description: 'Reviewed before it joined the merge queue', target_url: URL }])
 })

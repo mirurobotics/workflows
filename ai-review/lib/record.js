@@ -76,6 +76,11 @@ async function upsertSummary (github, context, env, body) {
 const pending = ({ github, context, env = process.env }) =>
   setStatus(github, context, env, 'pending', 'Claude is reviewing this commit')
 
+// A PR joins the merge queue only after this review passed, so the
+// queue's merge commit passes too.
+const queued = ({ github, context, env = process.env }) =>
+  setStatus(github, context, env, 'success', 'Reviewed before it joined the merge queue')
+
 async function recordDesign ({ github, context, env }) {
   const { summary } = parseResult(env.RESULT)
   if (!summary) throw new Error('Design review produced no summary')
@@ -110,4 +115,4 @@ async function record ({ github, context, core, env = process.env }) {
   }
 }
 
-module.exports = { pending, record, designBody, verdictBody }
+module.exports = { pending, queued, record, designBody, verdictBody }
