@@ -22,3 +22,6 @@ jobs:
 
       - name: Test the AI review scripts
         run: node --test ai-review/lib/*.test.js
+
+  surface-lint:
+    uses: ./.github/workflows/surface-lint.yml
