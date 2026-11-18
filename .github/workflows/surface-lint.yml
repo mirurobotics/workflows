@@ -57,13 +57,16 @@ jobs:
         run: |
           git fetch --depth=1 --no-tags origin "$BASE_SHA"
           status=0
-          while IFS= read -r plan; do
+          while IFS=$'\t' read -r change path renamed_to; do
+            # A pure move (backlog to active) leaves an older plan unchecked.
+            [ "$change" = R100 ] && continue
+            plan=${renamed_to:-$path}
             chars=$(wc -m < "$plan")
             if [ "$chars" -gt "$MAX_CHARS" ]; then
               echo "::error file=$plan::Plan is $chars characters; the limit is $MAX_CHARS."
               status=1
             fi
-          done < <(git diff --name-only --diff-filter=AM "$BASE_SHA" HEAD -- 'plans/backlog/*.md' 'plans/active/*.md')
+          done < <(git diff --name-status --diff-filter=AMR "$BASE_SHA" HEAD -- 'plans/backlog/*.md' 'plans/active/*.md')
           exit "$status"
 
   # Private repos must grant `pull-requests: read` for re-runs to see edits.
