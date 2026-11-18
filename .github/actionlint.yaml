@@ -1,9 +1,6 @@
 paths:
-  .github/workflows/ai-review.yml:
+  .github/workflows/*.yml:
     ignore:
       # GitHub's job.workflow_repository and job.workflow_sha, which this
       # actionlint version doesn't know yet.
-      - 'property "workflow_(repository|sha)" is not defined'
-  .github/workflows/surface-lint.yml:
-    ignore:
       - 'property "workflow_(repository|sha)" is not defined'

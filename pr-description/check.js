@@ -9,10 +9,13 @@ const FOOTER = /<!--\s*([\w-]+):footer\s*-->[\s\S]*?<!--\s*\/\1:footer\s*-->/g
 function countedText (body) {
   const text = (body || '').replace(/\r\n/g, '\n').replace(FOOTER, '').replace(/<!--[\s\S]*?-->/g, '')
   const kept = []
-  let fenced = false
+  let fence = ''
   let skipLevel = 0
   for (const line of text.split('\n')) {
-    if (/^\s*(```|~~~)/.test(line)) fenced = !fenced
+    const run = line.match(/^\s{0,3}(`{3,}|~{3,})(.*)$/)
+    if (run && !fence && !(run[1][0] === '`' && run[2].includes('`'))) fence = run[1]
+    else if (run && fence && run[1][0] === fence[0] && run[1].length >= fence.length && !run[2].trim()) fence = ''
+    const fenced = fence || run
     const heading = !fenced && line.match(/^(#{1,6})\s+(.*)$/)
     if (heading) {
       const level = heading[1].length
@@ -29,7 +32,8 @@ async function check ({ github, context, core, limit }) {
   let body = pr.body
   let live = true
   try {
-    body = (await github.rest.pulls.get({ ...context.repo, pull_number: pr.number })).data.body
+    const request = { signal: AbortSignal.timeout(30000) }
+    body = (await github.rest.pulls.get({ ...context.repo, pull_number: pr.number, request })).data.body
   } catch (err) {
     live = false
     const hint = [403, 404].includes(err.status) ? ' Grant pull-requests: read so a re-run sees edits.' : ''

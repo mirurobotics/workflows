@@ -28,8 +28,16 @@ test('countedText: skips Decisions, Precedent and Reviewer notes at any level, w
 })
 
 test('countedText: ignores headings inside code fences', () => {
-  const body = '## Summary\n```\n## Decisions\n```\nkept'
-  assert.equal(countedText(body), body)
+  const body = '## Summary\n````\n## Decisions\n~~~\n```\n````\nkept\n## Decisions\ndropped'
+  assert.equal(countedText(body), '## Summary\n````\n## Decisions\n~~~\n```\n````\nkept')
+})
+
+test('countedText: inline code with backticks does not open a fence', () => {
+  assert.equal(countedText('```npm ci```\n## Decisions\ndropped'), '```npm ci```')
+})
+
+test('countedText: a skipped subsection ends at a shallower counted heading', () => {
+  assert.equal(countedText('### Reviewer notes\ndropped\n## Testing\nkept'), '## Testing\nkept')
 })
 
 test('countedText: handles a missing body', () => {
