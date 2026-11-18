@@ -10,11 +10,13 @@ const PLAN_GLOBS = ['plans/backlog/*.md', 'plans/active/*.md', 'plans/completed/
 // The sections filled in during implementation don't count toward the limit.
 function countedText (text) {
   const kept = []
-  let fenced = false
+  let fence = ''
   let skipping = false
   for (const line of text.replace(/\r\n/g, '\n').split('\n')) {
-    if (/^\s{0,3}(`{3,}|~{3,})/.test(line)) fenced = !fenced
-    const heading = !fenced && line.match(/^##\s+(.*)$/)
+    const run = line.match(/^\s{0,3}(`{3,}|~{3,})(.*)$/)
+    if (run && !fence && !(run[1][0] === '`' && run[2].includes('`'))) fence = run[1]
+    else if (run && fence && run[1][0] === fence[0] && run[1].length >= fence.length && !run[2].trim()) fence = ''
+    const heading = !fence && !run && line.match(/^##\s+(.*)$/)
     if (heading) skipping = SKIPPED.includes(heading[1].trim().toLowerCase())
     if (!skipping) kept.push(line)
   }

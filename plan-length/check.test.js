@@ -16,8 +16,12 @@ test('countedText: ### subsections stay inside a skipped section', () => {
 })
 
 test('countedText: ignores headings inside code fences', () => {
-  const fenced = '## Context\n```markdown\n## Progress\n```\n~~~\n## Decision Log\n~~~\nkept'
-  assert.equal(countedText(fenced), fenced)
+  const fenced = '## Context\n````\n~~~~\n## Progress\n```\n## Progress\n````js\n## Decision Log\n`````\nkept'
+  assert.equal(countedText(fenced + '\n## Progress\ndropped'), fenced)
+})
+
+test('countedText: inline code with backticks does not open a fence', () => {
+  assert.equal(countedText('```npm ci```\n## Progress\ndropped'), '```npm ci```')
 })
 
 test('countedText: normalizes CRLF line endings', () => {
@@ -47,8 +51,8 @@ test('check: fails a plan over the limit and names its file', () => {
   assert.deepEqual(out.error.map((e) => e.file), ['plans/active/a.md'])
 })
 
-test('check: counts characters, not bytes', () => {
-  assert.deepEqual(run({ 'plans/backlog/日本語.md': 'é'.repeat(10) }).failed, [])
+test('check: counts characters, not UTF-16 code units', () => {
+  assert.deepEqual(run({ 'plans/backlog/日本語.md': '🤖'.repeat(10) }).failed, [])
 })
 
 test('check: implementation sections do not count', () => {
