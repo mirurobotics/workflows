@@ -1,5 +1,5 @@
 paths:
-  .github/workflows/ai-review.yml:
+  .github/workflows/*.yml:
     ignore:
       # GitHub's job.workflow_repository and job.workflow_sha, which this
       # actionlint version doesn't know yet.

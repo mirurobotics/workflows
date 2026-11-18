@@ -23,5 +23,8 @@ jobs:
       - name: Test the AI review scripts
         run: node --test ai-review/lib/*.test.js
 
+      - name: Test the PR description check
+        run: node --test pr-description/*.test.js
+
   surface-lint:
     uses: ./.github/workflows/surface-lint.yml
