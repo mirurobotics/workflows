@@ -40,6 +40,15 @@ test('countedText: a closer indented 4+ spaces past a top-level fence does not c
   assert.equal(countedText(fenced + '\n## Progress\ndropped'), fenced)
 })
 
+test('countedText: a closer with a list marker does not close a fence', () => {
+  const fenced = '```\n- ```\n## Progress\n```'
+  assert.equal(countedText(fenced + '\n## Progress\ndropped'), fenced)
+})
+
+test('countedText: a closer indented up to 3 spaces closes a top-level fence', () => {
+  assert.equal(countedText('```\n## Progress\n   ```\n## Progress\ndropped'), '```\n## Progress\n   ```')
+})
+
 test('countedText: matches skipped headings in any case', () => {
   assert.equal(countedText('## Scope\nkept\n## progress\ndropped\n## Decision log\ndropped'), '## Scope\nkept')
 })
