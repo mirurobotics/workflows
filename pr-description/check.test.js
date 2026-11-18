@@ -28,7 +28,7 @@ test('countedText: skips Decisions, Precedent and Reviewer notes at any level, w
 })
 
 test('countedText: ignores headings inside code fences', () => {
-  const fenced = '````\n~~~~\n## Decisions\n```\n## Decisions\n````js\n## Decisions\n````\nkept'
+  const fenced = '````\n~~~~\n## Decisions\n```\n## Decisions\n````js\n## Decisions\n`````\nkept'
   assert.equal(countedText(fenced + '\n## Decisions\ndropped'), fenced)
 })
 
