@@ -58,16 +58,15 @@ jobs:
         run: |
           git fetch --depth=1 --no-tags origin "$BASE_SHA"
           status=0
-          while IFS=$'\t' read -r change path renamed_to; do
-            # A pure move (backlog to active) leaves an older plan unchecked.
-            [ "$change" = R100 ] && continue
-            plan=${renamed_to:-$path}
+          # -M100% counts only exact moves as renames, so a plan moved from
+          # backlog to active without edits is skipped.
+          while IFS= read -r plan; do
             chars=$(awk '/^## /{skip=($0 ~ /^## (Progress|Surprises & Discoveries|Decision Log|Outcomes & Retrospective)[[:space:]]*$/)} !skip' "$plan" | wc -m)
             if [ "$chars" -gt "$MAX_CHARS" ]; then
               echo "::error file=$plan::Plan is $chars characters, not counting Progress, Surprises & Discoveries, Decision Log and Outcomes & Retrospective; the limit is $MAX_CHARS."
               status=1
             fi
-          done < <(git -c core.quotePath=false diff --name-status --diff-filter=AMR "$BASE_SHA" HEAD -- 'plans/backlog/*.md' 'plans/active/*.md')
+          done < <(git -c core.quotePath=false diff --name-only --diff-filter=AM -M100% "$BASE_SHA" HEAD -- 'plans/backlog/*.md' 'plans/active/*.md')
           exit "$status"
 
   # Private repos must grant `pull-requests: read` for re-runs to see edits.
