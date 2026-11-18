@@ -26,5 +26,8 @@ jobs:
       - name: Test the PR description check
         run: node --test pr-description/*.test.js
 
+      - name: Test the plan length check
+        run: node --test plan-length/*.test.js
+
   surface-lint:
     uses: ./.github/workflows/surface-lint.yml
