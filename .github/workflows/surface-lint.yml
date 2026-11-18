@@ -47,7 +47,8 @@ jobs:
         uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
 
       # Only plans the change adds or edits are checked, so older long plans
-      # pass until someone touches them.
+      # pass until someone touches them. The sections filled in during
+      # implementation don't count toward the limit.
       - name: Check Plan Length
         if: inputs.max-plan-chars > 0 && (github.event_name == 'pull_request' || github.event_name == 'merge_group')
         env:
@@ -61,12 +62,12 @@ jobs:
             # A pure move (backlog to active) leaves an older plan unchecked.
             [ "$change" = R100 ] && continue
             plan=${renamed_to:-$path}
-            chars=$(wc -m < "$plan")
+            chars=$(awk '/^## /{skip=($0 ~ /^## (Progress|Surprises & Discoveries|Decision Log|Outcomes & Retrospective)[[:space:]]*$/)} !skip' "$plan" | wc -m)
             if [ "$chars" -gt "$MAX_CHARS" ]; then
-              echo "::error file=$plan::Plan is $chars characters; the limit is $MAX_CHARS."
+              echo "::error file=$plan::Plan is $chars characters, not counting Progress, Surprises & Discoveries, Decision Log and Outcomes & Retrospective; the limit is $MAX_CHARS."
               status=1
             fi
-          done < <(git diff --name-status --diff-filter=AMR "$BASE_SHA" HEAD -- 'plans/backlog/*.md' 'plans/active/*.md')
+          done < <(git -c core.quotePath=false diff --name-status --diff-filter=AMR "$BASE_SHA" HEAD -- 'plans/backlog/*.md' 'plans/active/*.md')
           exit "$status"
 
   # Private repos must grant `pull-requests: read` for re-runs to see edits.
