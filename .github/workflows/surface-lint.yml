@@ -16,7 +16,7 @@ on:
         type: number
         default: 1000
       max-plan-chars:
-        description: "Max characters in a new plan (0 disables)"
+        description: "Plan char limit, progress sections excluded (0 disables)"
         type: number
         default: 5000
 
