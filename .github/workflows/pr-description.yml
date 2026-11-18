@@ -2,7 +2,8 @@ name: PR Description
 
 # Callers run this from a pull_request trigger that includes `edited`, so
 # shortening a description re-runs the check. Keep it out of the main CI
-# workflow so an edit doesn't re-run lint and tests.
+# workflow so an edit doesn't re-run lint and tests. pr-description-pr.yml
+# is this repo's own caller and the one to copy.
 on:
   workflow_call:
     inputs:
@@ -11,28 +12,22 @@ on:
         type: string
         default: "ubuntu-latest"
       max-chars:
-        description: "Max characters in a PR description"
+        description: "Max characters in a PR description (0 disables)"
         type: number
         default: 1000
-  # This repo's own PRs.
-  pull_request:
-    types: [opened, edited, synchronize, reopened]
-
-permissions:
-  contents: read
-  pull-requests: read
 
 jobs:
-  # Private repos must grant `pull-requests: read` so the check sees edits.
+  # Callers must grant `pull-requests: read`, or the run fails to start.
   pr-description:
     timeout-minutes: 5
     name: pr-description
-    # Skip bots, and edits that only changed the title or base.
+    # Every edit re-runs, title-only too: a skipped run would count as a pass
+    # over an earlier failure on the same head.
     if: >-
-      github.event_name == 'pull_request'
+      inputs.max-chars > 0
+      && github.event_name == 'pull_request'
       && github.event.pull_request.user.type != 'Bot'
-      && (github.event.action != 'edited' || github.event.changes.body)
-    runs-on: ${{ inputs.runs-on || 'ubuntu-latest' }}
+    runs-on: ${{ inputs.runs-on }}
     concurrency:
       group: pr-description-${{ github.repository }}-${{ github.event.pull_request.number }}
       cancel-in-progress: true
@@ -49,7 +44,7 @@ jobs:
       - name: Check PR Description Length
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          MAX_CHARS: ${{ inputs.max-chars || 1000 }}
+          MAX_CHARS: ${{ inputs.max-chars }}
         with:
           script: |
             const lib = `${process.env.GITHUB_WORKSPACE}/pr-description-src/pr-description`
