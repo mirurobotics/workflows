@@ -2,6 +2,7 @@
 
 const { execFileSync } = require('node:child_process')
 const { readFileSync } = require('node:fs')
+const { basename } = require('node:path')
 
 const SKIPPED = ['progress', 'surprises & discoveries', 'decision log', 'outcomes & retrospective']
 const PLAN_GLOBS = ['plans/backlog/*.md', 'plans/active/*.md', 'plans/completed/*.md']
@@ -20,11 +21,12 @@ function countedText (text) {
   return kept.join('\n')
 }
 
-// A plan git pairs with a base plan as a rename isn't new, so older long
-// plans can still be moved and closed.
+// A plan whose file name is already under plans/ at the base isn't new, so
+// older long plans can still be moved and closed.
 function addedPlans (base) {
-  const args = ['-c', 'core.quotePath=false', 'diff', '--name-only', '--diff-filter=A', base, 'HEAD', '--', ...PLAN_GLOBS]
-  return execFileSync('git', args, { encoding: 'utf8' }).split('\n').filter(Boolean)
+  const git = (...args) => execFileSync('git', ['-c', 'core.quotePath=false', ...args], { encoding: 'utf8' }).split('\n').filter(Boolean)
+  const existing = new Set(git('ls-tree', '-r', '--name-only', base, '--', 'plans/').map((p) => basename(p)))
+  return git('diff', '--name-only', '--no-renames', '--diff-filter=A', base, 'HEAD', '--', ...PLAN_GLOBS).filter((p) => !existing.has(basename(p)))
 }
 
 function check ({ core, base, limit, listPlans = addedPlans, readPlan = (p) => readFileSync(p, 'utf8') }) {

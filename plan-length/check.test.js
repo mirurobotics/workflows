@@ -59,7 +59,7 @@ test('check: passes when the PR adds no plans', () => {
   assert.deepEqual(run({}), { info: [], error: [], failed: [] })
 })
 
-test('addedPlans: lists only plans new to the repo', (t) => {
+test('addedPlans: skips plans already under plans/, even when a move more than doubles them', (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'plan-length-'))
   const cwd = process.cwd()
   t.after(() => { process.chdir(cwd); fs.rmSync(dir, { recursive: true, force: true }) })
@@ -76,6 +76,7 @@ test('addedPlans: lists only plans new to the repo', (t) => {
   fs.mkdirSync('plans/completed')
   git('mv', 'plans/active/old.md', 'plans/completed/old.md')
   write('plans/active/edited.md', words(500) + ' more')
+  fs.writeFileSync('plans/completed/old.md', words(500) + '\n## Outcomes & Retrospective\n' + 'x'.repeat(20000))
   write('plans/backlog/new.md', 'new')
   write('plans/backlog/日本語.md', 'new')
   write('notes/other.md', 'not a plan')
