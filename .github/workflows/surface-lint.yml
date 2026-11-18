@@ -15,6 +15,10 @@ on:
         description: "Max characters in a PR description (0 disables)"
         type: number
         default: 1000
+      max-plan-chars:
+        description: "Max characters in a new or edited plan (0 disables)"
+        type: number
+        default: 5000
 
 jobs:
   surface-lint:
@@ -41,6 +45,26 @@ jobs:
 
       - name: Lint GitHub Actions Workflows
         uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
+
+      # Only plans the change adds or edits are checked, so older long plans
+      # pass until someone touches them.
+      - name: Check Plan Length
+        if: inputs.max-plan-chars > 0 && (github.event_name == 'pull_request' || github.event_name == 'merge_group')
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          MAX_CHARS: ${{ inputs.max-plan-chars }}
+          LC_ALL: C.UTF-8
+        run: |
+          git fetch --depth=1 --no-tags origin "$BASE_SHA"
+          status=0
+          while IFS= read -r plan; do
+            chars=$(wc -m < "$plan")
+            if [ "$chars" -gt "$MAX_CHARS" ]; then
+              echo "::error file=$plan::Plan is $chars characters; the limit is $MAX_CHARS."
+              status=1
+            fi
+          done < <(git diff --name-only --diff-filter=AM "$BASE_SHA" HEAD -- 'plans/backlog/*.md' 'plans/active/*.md')
+          exit "$status"
 
   # Private repos must grant `pull-requests: read` for re-runs to see edits.
   pr-description:
