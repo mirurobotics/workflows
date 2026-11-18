@@ -46,14 +46,23 @@ jobs:
       - name: Lint GitHub Actions Workflows
         uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
 
-      - name: Fetch Plan Base
-        if: inputs.max-plan-chars > 0 && (github.event_name == 'pull_request' || github.event_name == 'merge_group')
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+  plan-length:
+    timeout-minutes: 5
+    name: plan-length
+    if: inputs.max-plan-chars > 0 && (github.event_name == 'pull_request' || github.event_name == 'merge_group')
+    runs-on: ${{ inputs.runs-on }}
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Fetch Base
         run: git fetch --depth=1 --no-tags origin "$BASE_SHA"
 
-      - name: Checkout Plan Check Script
-        if: inputs.max-plan-chars > 0 && (github.event_name == 'pull_request' || github.event_name == 'merge_group')
+      - name: Checkout Check Script
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ job.workflow_repository }}
@@ -63,10 +72,8 @@ jobs:
           persist-credentials: false
 
       - name: Check Plan Length
-        if: inputs.max-plan-chars > 0 && (github.event_name == 'pull_request' || github.event_name == 'merge_group')
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
           MAX_CHARS: ${{ inputs.max-plan-chars }}
         with:
           script: |

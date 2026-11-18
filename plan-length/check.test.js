@@ -63,7 +63,7 @@ test('check: passes when the PR adds no plans', () => {
   assert.deepEqual(run({}), { info: [], error: [], failed: [] })
 })
 
-test('addedPlans: skips plans already under plans/, even when a move more than doubles them', (t) => {
+test('addedPlans and check: skip plans already under plans/, even when a move more than doubles them', (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'plan-length-'))
   const cwd = process.cwd()
   t.after(() => { process.chdir(cwd); fs.rmSync(dir, { recursive: true, force: true }) })
@@ -87,4 +87,10 @@ test('addedPlans: skips plans already under plans/, even when a move more than d
   git('add', '-A')
   git('commit', '-qm', 'change')
   assert.deepEqual(addedPlans(base).sort(), ['plans/backlog/new.md', 'plans/backlog/日本語.md'])
+
+  const out = { info: [], error: [], failed: [] }
+  const core = { info: (m) => out.info.push(m), error: (m, props) => out.error.push(props.file), setFailed: (m) => out.failed.push(m) }
+  check({ core, base, limit: 2 })
+  assert.deepEqual(out.error.sort(), ['plans/backlog/new.md', 'plans/backlog/日本語.md'])
+  assert.equal(out.failed.length, 2)
 })
