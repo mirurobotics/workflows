@@ -12,7 +12,7 @@ on:
         type: string
         default: ""
       max-pr-description-chars:
-        description: "Max characters in a PR description (0 disables)"
+        description: "Max PR description characters (0 disables; see pr-description.yml)"
         type: number
         default: 1000
 
