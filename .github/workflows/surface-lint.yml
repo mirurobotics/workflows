@@ -46,9 +46,9 @@ jobs:
       - name: Lint GitHub Actions Workflows
         uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
 
-      # Only plans new to the repo are checked; renames count as existing
-      # plans, so older long plans can still be moved and closed. The sections
-      # filled in during implementation don't count toward the limit.
+      # Only plans new to the repo are checked: a file git doesn't pair with a
+      # base plan as a rename. Older long plans can still be moved and closed.
+      # The sections filled in during implementation don't count.
       - name: Check Plan Length
         if: inputs.max-plan-chars > 0 && (github.event_name == 'pull_request' || github.event_name == 'merge_group')
         env:
@@ -58,14 +58,16 @@ jobs:
         run: |
           git fetch --depth=1 --no-tags origin "$BASE_SHA"
           set -o pipefail
+          plans=$(git -c core.quotePath=false diff --name-only --diff-filter=A "$BASE_SHA" HEAD -- 'plans/backlog/*.md' 'plans/active/*.md' 'plans/completed/*.md')
           status=0
           while IFS= read -r plan; do
-            chars=$(awk '/^## /{skip=($0 ~ /^## (Progress|Surprises & Discoveries|Decision Log|Outcomes & Retrospective)[[:space:]]*$/)} !skip' "$plan" | wc -m)
+            [ -n "$plan" ] || continue
+            chars=$(awk '/^```/{fence=!fence} !fence && /^## /{skip=($0 ~ /^## (Progress|Surprises & Discoveries|Decision Log|Outcomes & Retrospective)[[:space:]]*$/)} !skip' "$plan" | wc -m)
             if [ "$chars" -gt "$MAX_CHARS" ]; then
               echo "::error file=$plan::Plan is $chars characters, not counting Progress, Surprises & Discoveries, Decision Log and Outcomes & Retrospective; the limit is $MAX_CHARS."
               status=1
             fi
-          done < <(git -c core.quotePath=false diff --name-only --diff-filter=A "$BASE_SHA" HEAD -- 'plans/backlog/*.md' 'plans/active/*.md' 'plans/completed/*.md')
+          done <<< "$plans"
           exit "$status"
 
   # Private repos must grant `pull-requests: read` for re-runs to see edits.
