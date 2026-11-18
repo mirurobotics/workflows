@@ -28,8 +28,8 @@ test('countedText: skips Decisions, Precedent and Reviewer notes at any level, w
 })
 
 test('countedText: ignores headings inside code fences', () => {
-  const body = '## Summary\n````\n## Decisions\n~~~\n```\n````\nkept\n## Decisions\ndropped'
-  assert.equal(countedText(body), '## Summary\n````\n## Decisions\n~~~\n```\n````\nkept')
+  const body = '## Summary\n````\n## Decisions\n~~~~\n```js\n````\nkept\n## Decisions\ndropped'
+  assert.equal(countedText(body), '## Summary\n````\n## Decisions\n~~~~\n```js\n````\nkept')
 })
 
 test('countedText: inline code with backticks does not open a fence', () => {

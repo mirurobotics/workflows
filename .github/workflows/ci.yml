@@ -20,8 +20,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Test the AI review and PR description scripts
-        run: node --test ai-review/lib/*.test.js pr-description/*.test.js
+      - name: Test the AI review scripts
+        run: node --test ai-review/lib/*.test.js
+
+      - name: Test the PR description check
+        run: node --test pr-description/*.test.js
 
   surface-lint:
     uses: ./.github/workflows/surface-lint.yml
