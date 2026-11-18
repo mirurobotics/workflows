@@ -20,6 +20,20 @@ test('countedText: ignores headings inside code fences', () => {
   assert.equal(countedText(fenced + '\n## Progress\ndropped'), fenced)
 })
 
+test('countedText: ignores headings inside ~~~ fences, whose info string may hold backticks', () => {
+  const fenced = '~~~\n## Progress\n~~~\n~~~ `x`\n## Decision Log\n~~~'
+  assert.equal(countedText(fenced + '\n## Progress\ndropped'), fenced)
+})
+
+test('countedText: a fence after a list marker hides its headings', () => {
+  const fenced = '- ```bash\n  ## Progress\n  ```'
+  assert.equal(countedText(fenced + '\n## Progress\ndropped'), fenced)
+})
+
+test('countedText: matches skipped headings in any case', () => {
+  assert.equal(countedText('## Scope\nkept\n## progress\ndropped\n## Decision log\ndropped'), '## Scope\nkept')
+})
+
 test('countedText: inline code with backticks does not open a fence', () => {
   assert.equal(countedText('```npm ci```\n## Progress\ndropped'), '```npm ci```')
 })
