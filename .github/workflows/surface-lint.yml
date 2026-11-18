@@ -12,7 +12,7 @@ on:
         type: string
         default: ""
       max-pr-description-chars:
-        description: "Max characters in a pull request description (0 disables)"
+        description: "Max characters in a PR description (0 disables)"
         type: number
         default: 1000
 
@@ -45,7 +45,8 @@ jobs:
       # Boilerplate (HTML comments, bot footers, the attribution line) and the
       # Decisions and Reviewer notes sections don't count toward the limit.
       # Bot PRs and Mikado reference PRs are skipped. The body is fetched live,
-      # so re-running the job after editing the description re-checks it.
+      # so re-running the job after editing the description re-checks it; in
+      # private repos that needs the caller to grant `pull-requests: read`.
       - name: Check PR Description Length
         if: inputs.max-pr-description-chars > 0 && github.event_name == 'pull_request' && github.event.pull_request.user.type != 'Bot'
         env:
@@ -57,16 +58,16 @@ jobs:
         run: |
           import json, os, re, sys, urllib.request
 
-          body = os.environ["EVENT_BODY"]
+          body, live = os.environ["EVENT_BODY"], False
           try:
               req = urllib.request.Request(os.environ["PR_URL"], headers={
                   "Authorization": "Bearer " + os.environ["GH_TOKEN"],
                   "Accept": "application/vnd.github+json",
               })
               with urllib.request.urlopen(req, timeout=30) as resp:
-                  body = json.load(resp).get("body") or ""
+                  body, live = json.load(resp).get("body") or "", True
           except Exception as err:
-              print(f"Using the description from the triggering event ({err}).")
+              print(f"::warning::Couldn't read the current PR description ({err}); checking the one from the triggering event. Grant pull-requests: read so a re-run sees edits.")
 
           body = body.replace("\r\n", "\n")
           body = re.sub(r"<!--\s*([\w-]+):footer\s*-->.*?<!--\s*/\1:footer\s*-->", "", body, flags=re.S)
@@ -88,5 +89,5 @@ jobs:
           limit = int(os.environ["MAX_CHARS"])
           print(f"PR description is {chars} characters; the limit is {limit}.")
           if chars > limit:
-              print(f"::error::PR description is {chars} characters, not counting boilerplate, Decisions or Reviewer notes; the limit is {limit}. Shorten it, then re-run this job.")
+              print(f"::error::PR description is {chars} characters, not counting boilerplate, Decisions or Reviewer notes; the limit is {limit}. Shorten it, then " + ("re-run this job." if live else "push a commit to re-check."))
               sys.exit(1)
