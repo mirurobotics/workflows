@@ -22,9 +22,9 @@ test('countedText: drops attribution, comments and footers', () => {
   assert.equal(countedText(body), '## Summary\n- Does a thing.')
 })
 
-test('countedText: skips Decisions and Reviewer notes at any level, with their subsections', () => {
-  const body = '## Summary\nkept\n## Decisions:\n### Open question\ndropped\n## Precedent\nkept too\n### Reviewer Notes (optional)\ndropped'
-  assert.equal(countedText(body), '## Summary\nkept\n## Precedent\nkept too')
+test('countedText: skips Decisions, Precedent and Reviewer notes at any level, with their subsections', () => {
+  const body = '## Summary\nkept\n## Decisions:\n### Open question\ndropped\n## Notes\nkept too\n### Reviewer Notes (optional)\ndropped\n## Precedent\n| a | b |'
+  assert.equal(countedText(body), '## Summary\nkept\n## Notes\nkept too')
 })
 
 test('countedText: ignores headings inside code fences', () => {
@@ -36,7 +36,7 @@ test('countedText: handles a missing body', () => {
   assert.equal(countedText(null), '')
 })
 
-function run (body, { fetchFails = false } = {}) {
+function run (body, { fetchFails = false, status = 404 } = {}) {
   const out = { info: [], warning: [], failed: [] }
   const core = {
     info: (m) => out.info.push(m),
@@ -47,7 +47,7 @@ function run (body, { fetchFails = false } = {}) {
     rest: {
       pulls: {
         get: async () => {
-          if (fetchFails) throw new Error('Not Found')
+          if (fetchFails) throw Object.assign(new Error('failed'), { status })
           return { data: { body } }
         }
       }
@@ -69,11 +69,16 @@ test('check: counts characters, not UTF-16 units', async () => {
 
 test('check: falls back to the event body and says to push', async () => {
   const out = await run('x'.repeat(11), { fetchFails: true })
-  assert.equal(out.warning.length, 1)
+  assert.match(out.warning[0], /Grant pull-requests: read/)
   assert.match(out.failed[0], /push a commit to re-check/)
 })
 
 test('check: skips Mikado reference PRs', async () => {
   const out = await run('<!-- a -->\n> **Reference PR — do not merge.**\n' + 'x'.repeat(50))
   assert.deepEqual(out.failed, [])
+})
+
+test('check: only suggests the permission when access is denied', async () => {
+  const out = await run('x', { fetchFails: true, status: 502 })
+  assert.doesNotMatch(out.warning[0], /Grant/)
 })
