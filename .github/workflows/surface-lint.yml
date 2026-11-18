@@ -16,7 +16,7 @@ on:
         type: number
         default: 1000
       max-plan-chars:
-        description: "Max characters in a new or edited plan (0 disables)"
+        description: "Max characters in a new plan (0 disables)"
         type: number
         default: 5000
 
@@ -46,9 +46,9 @@ jobs:
       - name: Lint GitHub Actions Workflows
         uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
 
-      # Only plans the change adds or edits are checked, so older long plans
-      # pass until someone touches them. The sections filled in during
-      # implementation don't count toward the limit.
+      # Only plans new to the repo are checked; renames count as existing
+      # plans, so older long plans can still be moved and closed. The sections
+      # filled in during implementation don't count toward the limit.
       - name: Check Plan Length
         if: inputs.max-plan-chars > 0 && (github.event_name == 'pull_request' || github.event_name == 'merge_group')
         env:
@@ -57,16 +57,15 @@ jobs:
           LC_ALL: C.UTF-8
         run: |
           git fetch --depth=1 --no-tags origin "$BASE_SHA"
+          set -o pipefail
           status=0
-          # -M100% counts only exact moves as renames, so a plan moved between
-          # folders without edits is skipped.
           while IFS= read -r plan; do
             chars=$(awk '/^## /{skip=($0 ~ /^## (Progress|Surprises & Discoveries|Decision Log|Outcomes & Retrospective)[[:space:]]*$/)} !skip' "$plan" | wc -m)
             if [ "$chars" -gt "$MAX_CHARS" ]; then
               echo "::error file=$plan::Plan is $chars characters, not counting Progress, Surprises & Discoveries, Decision Log and Outcomes & Retrospective; the limit is $MAX_CHARS."
               status=1
             fi
-          done < <(git -c core.quotePath=false diff --name-only --diff-filter=AM -M100% "$BASE_SHA" HEAD -- 'plans/backlog/*.md' 'plans/active/*.md' 'plans/completed/*.md')
+          done < <(git -c core.quotePath=false diff --name-only --diff-filter=A "$BASE_SHA" HEAD -- 'plans/backlog/*.md' 'plans/active/*.md' 'plans/completed/*.md')
           exit "$status"
 
   # Private repos must grant `pull-requests: read` for re-runs to see edits.
