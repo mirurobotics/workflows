@@ -30,6 +30,11 @@ test('countedText: a fence after a list marker hides its headings', () => {
   assert.equal(countedText(fenced + '\n## Progress\ndropped'), fenced)
 })
 
+test('countedText: a fence in a numbered or nested list item closes at the item indent', () => {
+  const fenced = '10. ```bash\n    ## Progress\n    ```\n- a\n  - ```sh\n    ## Progress\n    ```'
+  assert.equal(countedText(fenced + '\n## Progress\ndropped'), fenced)
+})
+
 test('countedText: matches skipped headings in any case', () => {
   assert.equal(countedText('## Scope\nkept\n## progress\ndropped\n## Decision log\ndropped'), '## Scope\nkept')
 })
