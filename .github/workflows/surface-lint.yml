@@ -42,16 +42,13 @@ jobs:
       - name: Lint GitHub Actions Workflows
         uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
 
-  # A separate job so it has its own check, and re-running it after editing
-  # the description doesn't re-run the linters. The body is read live, which
-  # in private repos needs the caller to grant `pull-requests: read`.
+  # Private repos must grant `pull-requests: read` for re-runs to see edits.
   pr-description:
     timeout-minutes: 5
     name: pr-description
     if: inputs.max-pr-description-chars > 0 && github.event_name == 'pull_request' && github.event.pull_request.user.type != 'Bot'
     runs-on: ${{ inputs.runs-on }}
     steps:
-      # The github context names the caller's workflow; job names this one.
       - name: Checkout Check Script
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
