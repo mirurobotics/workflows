@@ -11,11 +11,16 @@ const PLAN_GLOBS = ['plans/backlog/*.md', 'plans/active/*.md', 'plans/completed/
 function countedText (text) {
   const kept = []
   let fence = ''
+  let column = 0
   let skipping = false
   for (const line of text.replace(/\r\n/g, '\n').split('\n')) {
-    const run = line.match(/^\s*(?:(?:[-*+]|\d+[.)])\s+)?(`{3,}|~{3,})(.*)$/)
-    if (run && !fence && !(run[1][0] === '`' && run[2].includes('`'))) fence = run[1]
-    else if (run && fence && run[1][0] === fence[0] && run[1].length >= fence.length && !run[2].trim()) fence = ''
+    // A fence may open after a list marker; it closes at most 3 spaces past where it opened.
+    const run = line.match(/^(\s*(?:(?:[-*+]|\d+[.)])\s+)?)(`{3,}|~{3,})(.*)$/)
+    if (run && !fence && !(run[2][0] === '`' && run[3].includes('`'))) {
+      fence = run[2]
+      column = run[1].length
+    } else if (run && fence && !run[1].trim() && run[1].length <= column + 3 &&
+      run[2][0] === fence[0] && run[2].length >= fence.length && !run[3].trim()) fence = ''
     const heading = !fence && !run && line.match(/^##\s+(.*)$/)
     if (heading) skipping = SKIPPED.some((name) => name.toLowerCase() === heading[1].trim().toLowerCase())
     if (!skipping) kept.push(line)

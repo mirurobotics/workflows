@@ -35,6 +35,11 @@ test('countedText: a fence in a numbered or nested list item closes at the item 
   assert.equal(countedText(fenced + '\n## Progress\ndropped'), fenced)
 })
 
+test('countedText: a closer indented 4+ spaces past a top-level fence does not close it', () => {
+  const fenced = '```markdown\n10. Run:\n    ```bash\n    npm ci\n    ```\n## Progress\n```'
+  assert.equal(countedText(fenced + '\n## Progress\ndropped'), fenced)
+})
+
 test('countedText: matches skipped headings in any case', () => {
   assert.equal(countedText('## Scope\nkept\n## progress\ndropped\n## Decision log\ndropped'), '## Scope\nkept')
 })
