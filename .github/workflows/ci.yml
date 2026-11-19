@@ -28,5 +28,3 @@ jobs:
 
   surface-lint:
     uses: ./.github/workflows/surface-lint.yml
-    with:
-      max-pr-description-chars: 0 # pr-description.yml checks it, on edits too
