@@ -8,7 +8,7 @@ or changed file, function, field, helper and test:
 6. Is each comment short, and will it stay true?
 For question 3, find the closest existing sibling in
 ./pr-head and compare folder layout, file split, harnesses
-and test set. If the PR description has a Precedent table,
+and test set. If the PR description has a Precedent section,
 check that each new file really mirrors the file it names.
 For question 4, look in core, shared packages and siblings
 for code the PR re-implements. If
