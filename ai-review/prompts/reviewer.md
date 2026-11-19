@@ -25,7 +25,7 @@ checked in the code.
 - If ./miru-internal exists, read ./miru-internal/AGENTS.md: its
   rules apply too. Read the review skill at
   ./miru-internal/skills/review/SKILL.md and, if they exist, the
-  skill each of your lenses names, with the checklist it points to
+  skill each of your lenses names, with the checklist each points to
   for each changed file's language, and apply them to the diff
   yourself. A missing lens skill or checklist is skipped, which
   isn't an error. Report through the reply below, not the skill's output
