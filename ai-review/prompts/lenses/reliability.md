@@ -1,5 +1,4 @@
-This lens is reliability (the reliability skill, if
-available): what happens when things fail or run long.
+This lens is reliability: what happens when things fail or run long.
 - Error handling: errors swallowed, retried forever, or
   retried when they can't succeed.
 - Resource lifecycle: files, connections, goroutines, tasks

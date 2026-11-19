@@ -1,5 +1,4 @@
-This lens is documentation (the document skill, if
-available): whether the docs still tell the truth after this
+This lens is documentation: whether the docs still tell the truth after this
 change.
 - Find READMEs, doc comments, API docs, examples, CLI help
   and skill text that describe what changed, including files
