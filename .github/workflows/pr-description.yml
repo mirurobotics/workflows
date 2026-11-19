@@ -2,7 +2,7 @@ name: PR Description
 
 # Callers run this from a pull_request trigger that includes `edited`, so
 # shortening a description re-runs the check. Keep it out of the main CI
-# workflow so an edit doesn't re-run lint and tests. pr-description-pr.yml
+# workflow so an edit doesn't re-run lint and tests. pr-description-self.yml
 # is this repo's own caller and the one to copy.
 on:
   workflow_call:
