@@ -20,8 +20,7 @@
 # Each PR gets one summary comment, edited every round. It records the
 # head it reviewed, so later rounds review and post nits only on what
 # changed since. Generated files are reviewed and counted like any
-# other file. Files under plans/ are read for intent only: they get no
-# comments and don't count toward the PR's size.
+# other file.
 #
 # The merge queue's merge commit passes at once: a PR joins the queue
 # only after this review passed.
@@ -103,7 +102,7 @@ on:
 env:
   STATUS_CONTEXT: ai-review
   # mirurobotics/agents commit the miru-internal rules and skills come from.
-  AGENTS_REF: 823712338d20adff57b39ab69ac35f09a47b2e37
+  AGENTS_REF: 5078138a8dfe62bfdce4def76e4b9c725d45215f
 
 jobs:
   # Every push, plus switches between draft and ready. Callers must

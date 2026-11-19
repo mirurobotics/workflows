@@ -62,12 +62,6 @@ test('plan writes the reviewers\' instructions for the required review', () => {
   assert.match(read('angles/design.md'), /lenses\/design\.md\n$/)
 })
 
-test('plan leaves plans out of the PR\'s size', () => {
-  const { read } = runPlan('review', [file('src/a.go', 50), file('plans/active/20261105-a.md', 300)])
-  assert.equal(read('angles/correctness.md'), null)
-  assert.match(read('angles/review.md'), /security\.md\n$/)
-})
-
 test('plan sizes later rounds by the delta and spots renamed test files', () => {
   const delta = { diff: '', files: [file('a', 100, { deletions: 20 })] }
   const { read } = runPlan('review', [file('src/b.go', 30, { previous_filename: 'tests/b.go' })], delta)

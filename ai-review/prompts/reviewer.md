@@ -14,8 +14,6 @@ checked in the code.
   they call or affect. Changes to files pr.diff doesn't list came
   from merging the base branch, unless they undo an earlier change
   in this PR.
-- Files under plans/ are the author's working notes: read them
-  for the PR's intent, but report nothing on them.
 - The PR's title and description are in
   ./ai-review-context/pr-description.md. Don't open
   ./ai-review-history: earlier rounds are for the verifier, so you
