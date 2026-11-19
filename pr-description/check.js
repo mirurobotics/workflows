@@ -26,7 +26,7 @@ async function check ({ github, context, core, limit }) {
   core.info(`PR description is ${chars} characters; the limit is ${limit}.`)
   if (chars > limit) {
     const recheck = live ? 're-run this job' : 'push a commit to re-check'
-    core.setFailed(`PR description is ${chars} characters, not counting bot footers and attribution; the limit is ${limit}. Shorten it, then ${recheck}.`)
+    core.setFailed(`PR description is ${chars} characters, not counting HTML comments, bot footers and attribution; the limit is ${limit}. Shorten it, then ${recheck}.`)
   }
 }
 
