@@ -1,6 +1,4 @@
-This lens is reliability
-(./miru-internal/skills/reliability/SKILL.md, if it exists):
-what happens when things fail or run long.
+This lens is reliability: what happens when things fail or run long.
 - Error handling: errors swallowed, retried forever, or
   retried when they can't succeed.
 - Resource lifecycle: files, connections, goroutines, tasks

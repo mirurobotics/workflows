@@ -1,5 +1,4 @@
-This lens is security
-(./miru-internal/skills/security/SKILL.md, if it exists).
+This lens is security.
 - Follow untrusted input (requests, MQTT messages, files, PR
   content in CI) from where it enters to where it is used:
   injection, path traversal, unbounded sizes, unsafe parsing.
