@@ -1,0 +1,51 @@
+name: PR Description
+
+# Callers run this from a pull_request trigger that includes `edited`, so
+# shortening a description re-runs the check. Keep it out of the main CI
+# workflow so an edit doesn't re-run lint and tests. pr-description-self.yml
+# is this repo's own caller and the one to copy.
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        description: "Runner label"
+        type: string
+        default: "ubuntu-latest"
+      max-chars:
+        description: "Max characters in a PR description (0 disables)"
+        type: number
+        default: 1000
+
+jobs:
+  # Callers should grant `pull-requests: read` so the check reads the live description.
+  pr-description:
+    timeout-minutes: 5
+    name: pr-description
+    # Every edit re-runs, title-only too: a skipped run would count as a pass
+    # over an earlier failure on the same head.
+    if: >-
+      inputs.max-chars > 0
+      && github.event_name == 'pull_request'
+      && github.event.pull_request.user.type != 'Bot'
+    runs-on: ${{ inputs.runs-on }}
+    concurrency:
+      group: pr-description-${{ github.repository }}-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout Check Script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: pr-description-src
+          sparse-checkout: pr-description
+          persist-credentials: false
+
+      - name: Check PR Description Length
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          MAX_CHARS: ${{ inputs.max-chars }}
+        with:
+          script: |
+            const lib = `${process.env.GITHUB_WORKSPACE}/pr-description-src/pr-description`
+            await require(`${lib}/check.js`).check({ github, context, core, limit: Number(process.env.MAX_CHARS) })
