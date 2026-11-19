@@ -17,7 +17,7 @@ on:
         default: 1000
 
 jobs:
-  # Callers must grant `pull-requests: read`, or the run fails to start.
+  # Callers should grant `pull-requests: read` so the check reads the live description.
   pr-description:
     timeout-minutes: 5
     name: pr-description
