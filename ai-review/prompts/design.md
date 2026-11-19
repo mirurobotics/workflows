@@ -9,8 +9,6 @@ merge until it is fixed or answered with a reason.
 2. The diff is in ./ai-review-context/pr.diff, the title and
    description in ./ai-review-context/pr-description.md, the PR
    head in ./pr-head and the base branch at the workspace root.
-   Files under plans/ are the author's working notes: read them
-   for intent, but post nothing on them.
 3. Post only new findings. ./ai-review-history holds the inline
    threads (review-threads.md) and the PR conversation
    (conversation.md); earlier design summaries are comments by

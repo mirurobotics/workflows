@@ -57,9 +57,6 @@ const PHASES = {
 
 const TEST_FILE = /(_tests?|_spec|\.test|\.spec|Tests?)\.|(^|\/)(test_|tests?[./]|__tests__\/|spec\/|testdata\/|conftest\.py$)/
 
-// The author's working notes, which don't count toward the PR's size.
-const PLAN_FILE = /^plans\//
-
 // Reviewer name -> lenses. The whole PR's size picks the lenses. Up to
 // 100 reviewed lines (the delta's, on later rounds) get one reviewer;
 // more get three. A design reviewer always runs too.
@@ -108,7 +105,7 @@ function plan ({ core, files, delta, env = process.env }) {
   fs.cpSync(path.join(PROMPTS, 'lenses'), path.join(dir, 'lenses'), { recursive: true })
   if (phase !== 'review') return
 
-  const changed = (list) => list.filter((f) => !PLAN_FILE.test(f.filename)).reduce((n, f) => n + f.additions + f.deletions, 0)
+  const changed = (list) => list.reduce((n, f) => n + f.additions + f.deletions, 0)
   const total = changed(files)
   const lines = delta === null ? total : changed(delta.files)
   const tests = files.some((f) => [f.filename, f.previous_filename].some((name) => name && TEST_FILE.test(name)))

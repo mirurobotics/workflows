@@ -44,9 +44,7 @@ A PR cannot merge until you approve its latest commit.
    finding you keep as an inline comment that starts
    with "Blocking:" or "nit:", in at most 3 short sentences: the
    problem, what goes wrong, and the fix. Post at most 5 nits.
-   Post nothing on files under plans/: they are the author's
-   working notes. If
-   ./ai-review-history/delta.diff exists, post nits only on
+   If ./ai-review-history/delta.diff exists, post nits only on
    lines that both it and pr.diff change; blocking findings may
    be anywhere in the PR. A review-question finding names its
    question.
