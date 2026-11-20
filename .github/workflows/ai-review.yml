@@ -102,7 +102,7 @@ on:
 env:
   STATUS_CONTEXT: ai-review
   # mirurobotics/agents commit the miru-internal rules and skills come from.
-  AGENTS_REF: 66e45ea0f9660fcfdf648b386c1792382a3add6b
+  AGENTS_REF: 636ede96f79b808212729ea0a207b056983856d3
 
 jobs:
   # Every push, plus switches between draft and ready. Callers must

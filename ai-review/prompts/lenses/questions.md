@@ -12,7 +12,7 @@ and test set. If the PR description has a Precedent section,
 check that each new file really mirrors the file it names.
 For question 4, look in core, shared packages and siblings
 for code the PR re-implements. If
-./miru-internal/skills/self-review/references/examples.md
+./miru-internal/skills/review/references/examples.md
 exists, it holds real maintainer comments grouped by
 question: use them to calibrate what is worth raising.
 Report a question only where you have checked the answer and
