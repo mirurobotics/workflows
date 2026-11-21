@@ -32,8 +32,8 @@ A PR cannot merge until you approve its latest commit.
    "### AI review:". A point is settled when the PR author or
    an OWNER, MEMBER or COLLABORATOR answered it (fixed,
    explained or deferred to a later PR) and the code matches
-   that answer, or when its thread is marked (resolved) with no
-   such answer. A blocking design point is settled the same
+   that answer, or when its thread is marked (resolved) and
+   none of them answered it. A blocking design point is settled the same
    way, by an answer that gives a reason or defers it. A
    blocking bug still in the code is never settled. If the code
    changed so an
