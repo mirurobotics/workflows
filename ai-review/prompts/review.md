@@ -29,13 +29,14 @@ A PR cannot merge until you approve its latest commit.
    the inline threads (review-threads.md) and the PR
    conversation (conversation.md); earlier
    summaries are comments by github-actions[bot] that start with
-   "### AI review:". A point is settled when its thread is
-   marked (resolved), or when the PR author or an OWNER, MEMBER
-   or COLLABORATOR answered it (fixed, explained or deferred to
-   a later PR) and the code matches that answer. A blocking
-   design point is settled the same way, by an answer that gives
-   a reason or defers it. A blocking bug still in the code is
-   never settled. If the code changed so an
+   "### AI review:". A point is settled when the PR author or
+   an OWNER, MEMBER or COLLABORATOR answered it (fixed,
+   explained or deferred to a later PR) and the code matches
+   that answer, or when its thread is marked (resolved) and
+   none of them answered it. A blocking design point is settled the same
+   way, by an answer that gives a reason or defers it. A
+   blocking bug still in the code is never settled. If the code
+   changed so an
    answer no longer holds, post one new comment saying what
    changed.
 4. Post each design finding you keep (its description starts
