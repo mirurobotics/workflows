@@ -16,7 +16,7 @@ on:
         type: string
         default: "go tool miru"
     secrets:
-      SUBMODULES_PAT:
+      SUBMODULES_TOKEN:
         description: "Read access to private mirurobotics Go modules"
         required: false
 
@@ -26,7 +26,7 @@ jobs:
     name: go-lint
     runs-on: ${{ inputs.runs-on }}
     env:
-      HAS_SUBMODULES_PAT: ${{ secrets.SUBMODULES_PAT != '' }}
+      HAS_SUBMODULES_TOKEN: ${{ secrets.SUBMODULES_TOKEN != '' }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -40,11 +40,11 @@ jobs:
           go-version-file: ./go.mod
 
       - name: Configure Git for Go Modules
-        if: env.HAS_SUBMODULES_PAT == 'true'
+        if: env.HAS_SUBMODULES_TOKEN == 'true'
         env:
-          SUBMODULES_PAT: ${{ secrets.SUBMODULES_PAT }}
+          SUBMODULES_TOKEN: ${{ secrets.SUBMODULES_TOKEN }}
         run: |
-          url="https://${SUBMODULES_PAT}@github.com/mirurobotics/"
+          url="https://${SUBMODULES_TOKEN}@github.com/mirurobotics/"
           git config --global url."$url".insteadOf \
             "https://github.com/mirurobotics/"
           go env -w GOPRIVATE="github.com/mirurobotics/*"
