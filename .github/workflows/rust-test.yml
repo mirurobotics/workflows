@@ -7,14 +7,10 @@ on:
         description: "Runner label"
         type: string
         default: "ubuntu-latest"
-      rusttools-rev:
-        description: "rusttools commit to install from; empty skips the install"
-        type: string
-        default: ""
       lint-imports:
         description: "Command that runs the lint-imports CLI"
         type: string
-        default: "lint-imports"
+        required: true
 
 jobs:
   rust-test:
@@ -39,15 +35,6 @@ jobs:
       - name: Install cargo-llvm-cov
         # yamllint disable-line rule:line-length
         uses: taiki-e/install-action@21eb0b6228fa6252dafdd9c82e7516ad2328c775 # cargo-llvm-cov
-
-      - name: Install lint-imports
-        if: inputs.rusttools-rev != ''
-        env:
-          RUSTTOOLS_REV: ${{ inputs.rusttools-rev }}
-        run: |
-          cargo install --locked \
-            --git https://github.com/mirurobotics/rusttools \
-            --rev "$RUSTTOOLS_REV" lint-imports
 
       - name: Run Tests & Check Coverage
         env:
