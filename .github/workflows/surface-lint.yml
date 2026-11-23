@@ -11,6 +11,10 @@ on:
         description: "Space-separated paths to exclude from shell script linting"
         type: string
         default: ""
+      shell-size-ignore:
+        description: "Space-separated paths to exclude from the shell script size limit"
+        type: string
+        default: ""
 
 jobs:
   surface-lint:
@@ -32,8 +36,52 @@ jobs:
         # yamllint disable rule:line-length
         uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38 # 2.0.0
         with:
-          scandir: ./scripts
+          scandir: .
           ignore_paths: ${{ inputs.shellcheck-ignore }}
+
+      - name: Install shfmt
+        env:
+          SHFMT_URL: https://github.com/mvdan/sh/releases/download/v3.12.0/shfmt_v3.12.0_linux_amd64
+          SHFMT_SHA256: d9fbb2a9c33d13f47e7618cf362a914d029d02a6df124064fff04fd688a745ea
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/shfmt" "$SHFMT_URL"
+          echo "$SHFMT_SHA256  $RUNNER_TEMP/shfmt" | sha256sum --check
+          sudo install "$RUNNER_TEMP/shfmt" /usr/local/bin/shfmt
+
+      - name: Find Shell Scripts
+        env:
+          SHELLCHECK_IGNORE: ${{ inputs.shellcheck-ignore }}
+        run: |
+          read -ra ignored <<< "$SHELLCHECK_IGNORE"
+          shfmt -f . > "$RUNNER_TEMP/all-shell-scripts"
+          while IFS= read -r script; do
+            for path in "${ignored[@]}"; do
+              case "$script" in "${path#./}" | "${path#./}"/*) continue 2 ;; esac
+            done
+            echo "$script"
+          done < "$RUNNER_TEMP/all-shell-scripts" > "$RUNNER_TEMP/shell-scripts"
+
+      - name: Lint Shell Script Formatting
+        run: xargs -r -d '\n' shfmt -d -i 4 -ci < "$RUNNER_TEMP/shell-scripts"
+
+      - name: Lint Shell Script Size
+        env:
+          SHELL_SIZE_IGNORE: ${{ inputs.shell-size-ignore }}
+        run: |
+          read -ra exempt <<< "$SHELL_SIZE_IGNORE"
+          limit=100
+          status=0
+          while IFS= read -r script; do
+            for path in "${exempt[@]}"; do
+              case "$script" in "${path#./}" | "${path#./}"/*) continue 2 ;; esac
+            done
+            lines=$(awk '!/^[[:space:]]*(#|$)/ { n++ } END { print n + 0 }' "$script")
+            if [ "$lines" -gt "$limit" ]; then
+              echo "$script: file is $lines lines (limit $limit); port it to Go or Python"
+              status=1
+            fi
+          done < "$RUNNER_TEMP/shell-scripts"
+          exit "$status"
 
       - name: Lint GitHub Actions Workflows
         uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
