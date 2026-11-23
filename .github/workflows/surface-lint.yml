@@ -7,7 +7,7 @@ on:
         description: "Runner label"
         type: string
         default: "ubuntu-latest"
-      shellcheck-ignore:
+      shell-ignore:
         description: "Space-separated paths to exclude from shell script linting"
         type: string
         default: ""
@@ -28,12 +28,45 @@ jobs:
           file_or_dir: .
           config_file: .yamllint.yml
 
-      - name: Lint Shell Scripts
-        # yamllint disable rule:line-length
-        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38 # 2.0.0
+      - name: Checkout Shell Lint Script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          scandir: ./scripts
-          ignore_paths: ${{ inputs.shellcheck-ignore }}
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: surface-lint-src
+          sparse-checkout: surface-lint
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Install shellcheck and shfmt
+        env:
+          SHELLCHECK_VERSION: v0.11.0
+          SHELLCHECK_SHA256: 8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198
+          SHFMT_VERSION: v3.12.0
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -fsSL -o "$RUNNER_TEMP/shellcheck.tar.xz" "https://github.com/koalaman/shellcheck/releases/download/$SHELLCHECK_VERSION/shellcheck-$SHELLCHECK_VERSION.linux.x86_64.tar.xz"
+          echo "$SHELLCHECK_SHA256  $RUNNER_TEMP/shellcheck.tar.xz" | sha256sum --check
+          tar -xJf "$RUNNER_TEMP/shellcheck.tar.xz" -C "$RUNNER_TEMP/bin" --strip-components=1 "shellcheck-$SHELLCHECK_VERSION/shellcheck"
+          GOBIN="$RUNNER_TEMP/bin" go install "mvdan.cc/sh/v3/cmd/shfmt@$SHFMT_VERSION"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Find Shell Scripts
+        env:
+          SHELL_IGNORE: ${{ inputs.shell-ignore }}
+        run: |
+          shfmt -f . > "$RUNNER_TEMP/all-shell-scripts"
+          node surface-lint-src/surface-lint/shell.js select "$RUNNER_TEMP/all-shell-scripts" "$SHELL_IGNORE surface-lint-src" > "$RUNNER_TEMP/shell-scripts"
+
+      - name: Lint Shell Scripts
+        run: xargs -r -d '\n' shellcheck < "$RUNNER_TEMP/shell-scripts"
+
+      - name: Lint Shell Script Formatting
+        run: |
+          xargs -r -d '\n' shfmt -d -i 4 -ci < "$RUNNER_TEMP/shell-scripts" || { echo "fix: shfmt -w -i 4 -ci <file>"; exit 1; }
+
+      - name: Lint Shell Script Size
+        run: node surface-lint-src/surface-lint/shell.js size "$RUNNER_TEMP/shell-scripts"
 
       - name: Lint GitHub Actions Workflows
         uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
