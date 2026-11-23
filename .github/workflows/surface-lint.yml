@@ -28,6 +28,16 @@ jobs:
           file_or_dir: .
           config_file: .yamllint.yml
 
+      - name: Checkout Shell Lint Script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: surface-lint-src
+          sparse-checkout: surface-lint
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
       - name: Install shellcheck and shfmt
         env:
           SHELLCHECK_VERSION: v0.11.0
@@ -45,16 +55,8 @@ jobs:
         env:
           SHELL_IGNORE: ${{ inputs.shell-ignore }}
         run: |
-          read -ra ignored <<< "$SHELL_IGNORE"
           shfmt -f . > "$RUNNER_TEMP/all-shell-scripts"
-          while IFS= read -r script; do
-            for path in "${ignored[@]}"; do
-              path=${path#./}
-              path=${path%/}
-              case "$script" in "$path" | "$path"/*) continue 2 ;; esac
-            done
-            echo "$script"
-          done < "$RUNNER_TEMP/all-shell-scripts" > "$RUNNER_TEMP/shell-scripts"
+          node surface-lint-src/surface-lint/shell.js select "$RUNNER_TEMP/all-shell-scripts" "$SHELL_IGNORE" > "$RUNNER_TEMP/shell-scripts"
 
       - name: Lint Shell Scripts
         run: xargs -r -d '\n' shellcheck < "$RUNNER_TEMP/shell-scripts"
@@ -64,18 +66,7 @@ jobs:
           xargs -r -d '\n' shfmt -d -i 4 -ci < "$RUNNER_TEMP/shell-scripts" || { echo "fix: shfmt -w -i 4 -ci <file>"; exit 1; }
 
       - name: Lint Shell Script Size
-        run: |
-          limit=100
-          status=0
-          while IFS= read -r script; do
-            grep -q '^#[[:space:]]*nolint:filelen' "$script" && continue
-            lines=$(awk '!/^[[:space:]]*(#|$)/ { n++ } END { print n + 0 }' "$script")
-            if [ "$lines" -gt "$limit" ]; then
-              echo "$script: file is $lines lines (limit $limit); port it to Go or Python"
-              status=1
-            fi
-          done < "$RUNNER_TEMP/shell-scripts"
-          exit "$status"
+        run: node surface-lint-src/surface-lint/shell.js size "$RUNNER_TEMP/shell-scripts"
 
       - name: Lint GitHub Actions Workflows
         uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
