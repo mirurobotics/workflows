@@ -60,7 +60,8 @@ jobs:
         run: xargs -r -d '\n' shellcheck < "$RUNNER_TEMP/shell-scripts"
 
       - name: Lint Shell Script Formatting
-        run: xargs -r -d '\n' shfmt -d -i 4 -ci < "$RUNNER_TEMP/shell-scripts" || { echo "fix: shfmt -w -i 4 -ci <file>"; exit 1; }
+        run: |
+          xargs -r -d '\n' shfmt -d -i 4 -ci < "$RUNNER_TEMP/shell-scripts" || { echo "fix: shfmt -w -i 4 -ci <file>"; exit 1; }
 
       - name: Lint Shell Script Size
         run: |
