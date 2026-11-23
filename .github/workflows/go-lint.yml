@@ -20,9 +20,6 @@ on:
         description: "Read access to private mirurobotics Go modules"
         required: false
 
-permissions:
-  contents: read
-
 jobs:
   go-lint:
     timeout-minutes: 10
