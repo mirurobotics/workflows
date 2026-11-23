@@ -7,12 +7,8 @@ on:
         description: "Runner label"
         type: string
         default: "ubuntu-latest"
-      shellcheck-ignore:
+      shell-ignore:
         description: "Space-separated paths to exclude from shell script linting"
-        type: string
-        default: ""
-      shell-size-ignore:
-        description: "Space-separated paths to exclude from the shell script size limit"
         type: string
         default: ""
 
@@ -32,27 +28,26 @@ jobs:
           file_or_dir: .
           config_file: .yamllint.yml
 
-      - name: Lint Shell Scripts
-        # yamllint disable rule:line-length
-        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38 # 2.0.0
-        with:
-          scandir: .
-          ignore_paths: ${{ inputs.shellcheck-ignore }}
-
-      - name: Install shfmt
+      - name: Install shellcheck and shfmt
         env:
+          SHELLCHECK_URL: https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz
+          SHELLCHECK_SHA256: 8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198
           SHFMT_URL: https://github.com/mvdan/sh/releases/download/v3.12.0/shfmt_v3.12.0_linux_amd64
           SHFMT_SHA256: d9fbb2a9c33d13f47e7618cf362a914d029d02a6df124064fff04fd688a745ea
         run: |
+          curl -fsSL -o "$RUNNER_TEMP/shellcheck.tar.xz" "$SHELLCHECK_URL"
+          echo "$SHELLCHECK_SHA256  $RUNNER_TEMP/shellcheck.tar.xz" | sha256sum --check
+          tar -xJf "$RUNNER_TEMP/shellcheck.tar.xz" -C "$RUNNER_TEMP"
+          sudo install "$RUNNER_TEMP/shellcheck-v0.11.0/shellcheck" /usr/local/bin/shellcheck
           curl -fsSL -o "$RUNNER_TEMP/shfmt" "$SHFMT_URL"
           echo "$SHFMT_SHA256  $RUNNER_TEMP/shfmt" | sha256sum --check
           sudo install "$RUNNER_TEMP/shfmt" /usr/local/bin/shfmt
 
       - name: Find Shell Scripts
         env:
-          SHELLCHECK_IGNORE: ${{ inputs.shellcheck-ignore }}
+          SHELL_IGNORE: ${{ inputs.shell-ignore }}
         run: |
-          read -ra ignored <<< "$SHELLCHECK_IGNORE"
+          read -ra ignored <<< "$SHELL_IGNORE"
           shfmt -f . > "$RUNNER_TEMP/all-shell-scripts"
           while IFS= read -r script; do
             for path in "${ignored[@]}"; do
@@ -61,20 +56,18 @@ jobs:
             echo "$script"
           done < "$RUNNER_TEMP/all-shell-scripts" > "$RUNNER_TEMP/shell-scripts"
 
+      - name: Lint Shell Scripts
+        run: xargs -r -d '\n' shellcheck < "$RUNNER_TEMP/shell-scripts"
+
       - name: Lint Shell Script Formatting
-        run: xargs -r -d '\n' shfmt -d -i 4 -ci < "$RUNNER_TEMP/shell-scripts"
+        run: xargs -r -d '\n' shfmt -d -i 4 -ci < "$RUNNER_TEMP/shell-scripts" || { echo "fix: shfmt -w -i 4 -ci <file>"; exit 1; }
 
       - name: Lint Shell Script Size
-        env:
-          SHELL_SIZE_IGNORE: ${{ inputs.shell-size-ignore }}
         run: |
-          read -ra exempt <<< "$SHELL_SIZE_IGNORE"
           limit=100
           status=0
           while IFS= read -r script; do
-            for path in "${exempt[@]}"; do
-              case "$script" in "${path#./}" | "${path#./}"/*) continue 2 ;; esac
-            done
+            grep -q '^#[[:space:]]*nolint:filelen' "$script" && continue
             lines=$(awk '!/^[[:space:]]*(#|$)/ { n++ } END { print n + 0 }' "$script")
             if [ "$lines" -gt "$limit" ]; then
               echo "$script: file is $lines lines (limit $limit); port it to Go or Python"
