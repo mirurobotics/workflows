@@ -1,0 +1,93 @@
+name: Go Test
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        description: "Runner label"
+        type: string
+        default: "ubuntu-latest"
+      windows-runs-on:
+        description: "Windows runner label for a go test job; empty skips it"
+        type: string
+        default: ""
+      submodules:
+        description: "Fetch git submodules recursively"
+        type: boolean
+        default: false
+      miru:
+        description: "Command that runs the miru CLI"
+        type: string
+        default: "go tool miru"
+    secrets:
+      SUBMODULES_PAT:
+        description: "Read access to private mirurobotics Go modules"
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  go-test:
+    timeout-minutes: 10
+    name: go-test
+    runs-on: ${{ inputs.runs-on }}
+    env:
+      HAS_SUBMODULES_PAT: ${{ secrets.SUBMODULES_PAT != '' }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: ${{ inputs.submodules && 'recursive' }}
+
+      - name: Setup Go
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version-file: ./go.mod
+
+      - name: Configure Git for Go Modules
+        if: env.HAS_SUBMODULES_PAT == 'true'
+        env:
+          SUBMODULES_PAT: ${{ secrets.SUBMODULES_PAT }}
+        run: |
+          url="https://${SUBMODULES_PAT}@github.com/"
+          git config --global url."$url".insteadOf "https://github.com/"
+          go env -w GOPRIVATE="github.com/mirurobotics/*"
+
+      - name: Run Tests & Check Coverage
+        env:
+          MIRU: ${{ inputs.miru }}
+        run: |
+          # shellcheck disable=SC2086
+          $MIRU covgate
+
+  go-windows-test:
+    if: inputs.windows-runs-on != ''
+    timeout-minutes: 30
+    name: go-windows-test
+    runs-on: ${{ inputs.windows-runs-on }}
+    env:
+      HAS_SUBMODULES_PAT: ${{ secrets.SUBMODULES_PAT != '' }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: ${{ inputs.submodules && 'recursive' }}
+
+      - name: Setup Go
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version-file: ./go.mod
+
+      - name: Configure Git for Go Modules
+        if: env.HAS_SUBMODULES_PAT == 'true'
+        shell: bash
+        env:
+          SUBMODULES_PAT: ${{ secrets.SUBMODULES_PAT }}
+        run: |
+          url="https://${SUBMODULES_PAT}@github.com/"
+          git config --global url."$url".insteadOf "https://github.com/"
+          go env -w GOPRIVATE="github.com/mirurobotics/*"
+
+      - name: Run Tests
+        run: go test ./...
