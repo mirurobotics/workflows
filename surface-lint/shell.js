@@ -32,17 +32,20 @@ function isExempt (text) {
   return /^#\s*nolint:filelen/m.test(text)
 }
 
-function main ([command, listFile, ignore = '']) {
-  const scripts = fs.readFileSync(listFile, 'utf8').split('\n').filter(Boolean)
+function main ([command, listFile, ignore = ''], read = (path) => fs.readFileSync(path, 'utf8'), print = console.log) {
+  const scripts = read(listFile).split('\n').filter(Boolean)
   if (command === 'select') {
-    for (const script of selectScripts(scripts, ignore)) console.log(script)
+    selectScripts(scripts, ignore).forEach((script) => print(script))
     return 0
   }
-  const errors = oversized(scripts, (script) => fs.readFileSync(script, 'utf8'))
-  for (const error of errors) console.log(error)
-  return errors.length ? 1 : 0
+  if (command === 'size') {
+    const errors = oversized(scripts, read)
+    errors.forEach((error) => print(error))
+    return errors.length ? 1 : 0
+  }
+  throw new Error(`unknown command: ${command}`)
 }
 
 if (require.main === module) process.exitCode = main(process.argv.slice(2))
 
-module.exports = { selectScripts, oversized, codeLines, isExempt }
+module.exports = { selectScripts, oversized, codeLines, isExempt, main }
