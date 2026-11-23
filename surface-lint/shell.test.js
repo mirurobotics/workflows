@@ -26,7 +26,7 @@ test('isExempt: matches a nolint:filelen line, not a mention in code', () => {
 })
 
 test('oversized: fails only over the limit', () => {
-  const files = { 'ok.sh': 'echo\n'.repeat(100), 'big.sh': 'echo\n'.repeat(101) }
+  const files = { 'ok.sh': '# note\n\n'.repeat(50) + 'echo\n'.repeat(100), 'big.sh': 'echo\n'.repeat(101) }
   assert.deepEqual(oversized(['ok.sh', 'big.sh'], (f) => files[f]), [
     'big.sh: file is 101 lines (limit 100); port it to Go or Python'
   ])

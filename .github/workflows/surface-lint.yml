@@ -56,7 +56,7 @@ jobs:
           SHELL_IGNORE: ${{ inputs.shell-ignore }}
         run: |
           shfmt -f . > "$RUNNER_TEMP/all-shell-scripts"
-          node surface-lint-src/surface-lint/shell.js select "$RUNNER_TEMP/all-shell-scripts" "$SHELL_IGNORE" > "$RUNNER_TEMP/shell-scripts"
+          node surface-lint-src/surface-lint/shell.js select "$RUNNER_TEMP/all-shell-scripts" "$SHELL_IGNORE surface-lint-src" > "$RUNNER_TEMP/shell-scripts"
 
       - name: Lint Shell Scripts
         run: xargs -r -d '\n' shellcheck < "$RUNNER_TEMP/shell-scripts"
