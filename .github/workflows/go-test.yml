@@ -48,7 +48,8 @@ jobs:
         env:
           SUBMODULES_TOKEN: ${{ secrets.SUBMODULES_TOKEN }}
         run: |
-          url="https://${SUBMODULES_TOKEN}@github.com/mirurobotics/"
+          auth="x-access-token:${SUBMODULES_TOKEN}"
+          url="https://${auth}@github.com/mirurobotics/"
           git config --global url."$url".insteadOf \
             "https://github.com/mirurobotics/"
           go env -w GOPRIVATE="github.com/mirurobotics/*"
@@ -85,7 +86,8 @@ jobs:
         env:
           SUBMODULES_TOKEN: ${{ secrets.SUBMODULES_TOKEN }}
         run: |
-          url="https://${SUBMODULES_TOKEN}@github.com/mirurobotics/"
+          auth="x-access-token:${SUBMODULES_TOKEN}"
+          url="https://${auth}@github.com/mirurobotics/"
           git config --global url."$url".insteadOf \
             "https://github.com/mirurobotics/"
           go env -w GOPRIVATE="github.com/mirurobotics/*"
