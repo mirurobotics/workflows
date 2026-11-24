@@ -22,6 +22,21 @@ test('countedText: drops attribution, comments and footers', () => {
   assert.equal(countedText(body), '## Summary\n- Does a thing.')
 })
 
+test('countedText: drops Cursor Cloud Agent PR footer without dropping user HTML', () => {
+  const cursorFooter = '<div><a href="https://cursor.com/agents/bc-a62c528a-e7c9-4694-a5c4-a6a7cd0e5ea8?cursor_ref=pr_footer&cursor_cta=open_in_web"><picture><source media="(prefers-color-scheme: dark)" srcset="https://cursor.com/assets/images/open-in-web-dark.png"><source media="(prefers-color-scheme: light)" srcset="https://cursor.com/assets/images/open-in-web-light.png"><img alt="Open in Web" width="114" height="28" src="https://cursor.com/assets/images/open-in-web-dark.png"></picture></a>&nbsp;<a href="https://cursor.com/background-agent?bcId=bc-a62c528a-e7c9-4694-a5c4-a6a7cd0e5ea8&cursor_ref=pr_footer&cursor_cta=open_in_cursor"><picture><source media="(prefers-color-scheme: dark)" srcset="https://cursor.com/assets/images/open-in-cursor-dark.png"><source media="(prefers-color-scheme: light)" srcset="https://cursor.com/assets/images/open-in-cursor-light.png"><img alt="Open in Cursor" width="131" height="28" src="https://cursor.com/assets/images/open-in-cursor-dark.png"></picture></a>&nbsp;</div>'
+  const body = [
+    '<div>User HTML</div>',
+    '<div><a href="https://cursor.com/docs">Cursor docs</a></div>',
+    '',
+    '## Summary',
+    '- Does a thing.',
+    '',
+    '---',
+    cursorFooter
+  ].join('\r\n')
+  assert.equal(countedText(body), '<div>User HTML</div>\n<div><a href="https://cursor.com/docs">Cursor docs</a></div>\n\n## Summary\n- Does a thing.')
+})
+
 test('countedText: counts every section', () => {
   const body = '## Summary\nkept\n## Decisions\n### Precedent\n| a | b |\n## Reviewer notes\nkept too'
   assert.equal(countedText(body), body)
