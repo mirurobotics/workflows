@@ -5,7 +5,7 @@ or changed file, function, field, helper and test:
 3. What does the closest sibling do? Match its layout, harness and tests.
 4. Is it in the right layer and file (ARCHITECTURE.md), or does a shared helper already exist?
 5. Does the name say exactly what it does, with one name per concept and no clash with an existing meaning?
-6. Is each comment short, and will it stay true?
+6. Does it add a comment, reword one beyond keeping it true, or leave one stale?
 For question 3, find the closest existing sibling in
 ./pr-head and compare folder layout, file split, harnesses
 and test set. If the PR description has a Precedent section,
