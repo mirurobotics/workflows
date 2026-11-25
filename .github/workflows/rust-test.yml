@@ -1,0 +1,48 @@
+name: Rust Test
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        description: "Runner label"
+        type: string
+        default: "ubuntu-latest"
+      rusttools-rev:
+        description: "rusttools commit to install lint-imports from"
+        type: string
+        required: true
+
+jobs:
+  rust-test:
+    timeout-minutes: 10
+    name: rust-test
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Rust Toolchain
+        # yamllint disable-line rule:line-length
+        uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
+        with:
+          components: llvm-tools-preview
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+
+      - name: Install cargo-llvm-cov
+        # yamllint disable-line rule:line-length
+        uses: taiki-e/install-action@21eb0b6228fa6252dafdd9c82e7516ad2328c775 # cargo-llvm-cov
+
+      - name: Install lint-imports
+        env:
+          RUSTTOOLS_REV: ${{ inputs.rusttools-rev }}
+        run: |
+          cargo install --locked lint-imports \
+            --git https://github.com/mirurobotics/rusttools \
+            --rev "$RUSTTOOLS_REV"
+
+      - name: Run Tests & Check Coverage
+        run: lint-imports covgate
