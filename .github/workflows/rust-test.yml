@@ -7,8 +7,8 @@ on:
         description: "Runner label"
         type: string
         default: "ubuntu-latest"
-      lint-imports:
-        description: "Command that runs the lint-imports CLI"
+      rusttools-rev:
+        description: "mirurobotics/rusttools commit to install lint-imports from"
         type: string
         required: true
 
@@ -36,9 +36,13 @@ jobs:
         # yamllint disable-line rule:line-length
         uses: taiki-e/install-action@21eb0b6228fa6252dafdd9c82e7516ad2328c775 # cargo-llvm-cov
 
-      - name: Run Tests & Check Coverage
+      - name: Install lint-imports
         env:
-          LINT_IMPORTS: ${{ inputs.lint-imports }}
+          RUSTTOOLS_REV: ${{ inputs.rusttools-rev }}
         run: |
-          # shellcheck disable=SC2086
-          $LINT_IMPORTS covgate
+          cargo install --locked lint-imports \
+            --git https://github.com/mirurobotics/rusttools \
+            --rev "$RUSTTOOLS_REV"
+
+      - name: Run Tests & Check Coverage
+        run: lint-imports covgate
