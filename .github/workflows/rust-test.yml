@@ -8,7 +8,7 @@ on:
         type: string
         default: "ubuntu-latest"
       rusttools-rev:
-        description: "mirurobotics/rusttools commit to install lint-imports from"
+        description: "rusttools commit to install lint-imports from"
         type: string
         required: true
 
